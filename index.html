@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflix Executive Analytics Dashboard | Power BI Experience</title>
+  <meta name="description" content="State of the art interactive Netflix analytics dashboard with real-time filters, dynamic Chart.js visualizations, KPI tracking, and Power BI canvas background exporter.">
+  
+  <!-- Google Fonts: Bebas Neue, Montserrat, Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for crisp UI icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js 4.4.2 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Red Gradient Glows -->
+  <div class="ambient-glow glow-top-center"></div>
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Main App Shell -->
+  <div class="app-container">
+    
+    <!-- Header Section -->
+    <header class="dashboard-header" id="dashboard-header">
+      <div class="header-brand">
+        <div class="brand-badge">
+          <span class="netflix-icon-n">N</span>
+        </div>
+        <div class="brand-text">
+          <div class="title-row">
+            <h1 class="main-title"><span class="brand-highlight">NETFLIX</span> DASHBOARD</h1>
+            <span class="status-live-pill"><span class="pulse-dot"></span> LIVE INSIGHTS</span>
+          </div>
+          <p class="subtitle">Global Content Library, Regional Distribution & Release Intelligence</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions Toolbar -->
+      <div class="header-actions">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="global-search" placeholder="Search title, director, cast..." aria-label="Search Catalog">
+          <button id="clear-search-btn" class="clear-search-btn" title="Clear Search" style="display:none;">&times;</button>
+        </div>
+
+        <button id="btn-export-pbi" class="action-btn btn-secondary" title="Export 1920x1080 Power BI Canvas Background">
+          <i class="fa-solid fa-file-image"></i>
+          <span>Power BI Background</span>
+        </button>
+
+        <button id="btn-export-csv" class="action-btn btn-secondary" title="Export Filtered Data to CSV">
+          <i class="fa-solid fa-file-arrow-down"></i>
+          <span>Export CSV</span>
+        </button>
+
+        <button id="btn-reset-filters" class="action-btn btn-outline" title="Reset All Filters">
+          <i class="fa-solid fa-arrow-rotate-left"></i>
+          <span>Reset</span>
+        </button>
+
+        <button id="btn-fullscreen" class="action-btn btn-icon" title="Toggle Fullscreen" aria-label="Toggle Fullscreen">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Interactive Filter Toolbar -->
+    <section class="filters-card" id="filters-toolbar" aria-label="Dashboard Filters">
+      <div class="filter-group-segmented">
+        <span class="filter-label"><i class="fa-solid fa-layer-group"></i> Content Type:</span>
+        <div class="segmented-control" id="content-type-filter" role="radiogroup">
+          <button class="seg-btn active" data-type="All" role="radio" aria-checked="true">All</button>
+          <button class="seg-btn" data-type="Movie" role="radio" aria-checked="false">Movies</button>
+          <button class="seg-btn" data-type="TV Show" role="radio" aria-checked="false">TV Shows</button>
+        </div>
+      </div>
+
+      <div class="filter-select-group">
+        <label for="country-filter" class="filter-label"><i class="fa-solid fa-globe"></i> Country:</label>
+        <select id="country-filter" class="filter-select">
+          <option value="All">All Countries</option>
+        </select>
+      </div>
+
+      <div class="filter-select-group">
+        <label for="genre-filter" class="filter-label"><i class="fa-solid fa-film"></i> Genre:</label>
+        <select id="genre-filter" class="filter-select">
+          <option value="All">All Genres</option>
+        </select>
+      </div>
+
+      <div class="filter-select-group">
+        <label for="rating-filter" class="filter-label"><i class="fa-solid fa-shield-halved"></i> Rating:</label>
+        <select id="rating-filter" class="filter-select">
+          <option value="All">All Ratings</option>
+        </select>
+      </div>
+
+      <div class="filter-year-range">
+        <div class="year-label-row">
+          <span class="filter-label"><i class="fa-solid fa-calendar-days"></i> Min Year:</span>
+          <span id="year-value-label" class="year-badge">1990</span>
+        </div>
+        <input type="range" id="year-range" min="1990" max="2024" step="1" value="1990" class="range-slider">
+      </div>
+
+      <div class="filter-metrics-summary">
+        <span class="results-badge" id="results-count-badge">
+          Showing <strong id="filter-count">105</strong> titles
+        </span>
+      </div>
+    </section>
+
+    <!-- KPI Summary Cards Row (Matching Power BI KPIs) -->
+    <section class="kpi-grid" id="kpi-grid" aria-label="Key Performance Indicators">
+      
+      <!-- KPI 1: Total Titles -->
+      <div class="kpi-card" id="kpi-total-titles">
+        <div class="kpi-top">
+          <span class="kpi-title">Total Titles</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-clapperboard"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-titles">105</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext" id="kpi-sub-titles">Active Filtered Catalog</span>
+          <span class="kpi-pill kpi-pill-red">100%</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: Total Movies -->
+      <div class="kpi-card" id="kpi-total-movies">
+        <div class="kpi-top">
+          <span class="kpi-title">Total Movies</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-video"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-movies">55</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext" id="kpi-sub-movies">Feature Length</span>
+          <span class="kpi-pill" id="kpi-pill-movies">52.4%</span>
+        </div>
+      </div>
+
+      <!-- KPI 3: Total TV Shows -->
+      <div class="kpi-card" id="kpi-total-tvshows">
+        <div class="kpi-top">
+          <span class="kpi-title">Total TV Shows</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-tv"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-tvshows">50</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext" id="kpi-sub-tvshows">Episodic Series</span>
+          <span class="kpi-pill" id="kpi-pill-tvshows">47.6%</span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Total Countries -->
+      <div class="kpi-card" id="kpi-total-countries">
+        <div class="kpi-top">
+          <span class="kpi-title">Total Countries</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-earth-americas"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-countries">14</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext">Global Production Origin</span>
+          <span class="kpi-pill">Global</span>
+        </div>
+      </div>
+
+      <!-- KPI 5: Total Ratings -->
+      <div class="kpi-card" id="kpi-total-ratings">
+        <div class="kpi-top">
+          <span class="kpi-title">Content Ratings</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-star-half-stroke"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-ratings">7</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext">Maturity Standards</span>
+          <span class="kpi-pill">All Ages</span>
+        </div>
+      </div>
+
+      <!-- KPI 6: Average Duration -->
+      <div class="kpi-card" id="kpi-avg-duration">
+        <div class="kpi-top">
+          <span class="kpi-title">Avg. Duration</span>
+          <div class="kpi-icon-wrap"><i class="fa-solid fa-clock"></i></div>
+        </div>
+        <div class="kpi-main">
+          <span class="kpi-value" id="kpi-val-duration">124 min</span>
+        </div>
+        <div class="kpi-bottom">
+          <span class="kpi-subtext" id="kpi-sub-duration">3.4 Avg Seasons</span>
+          <span class="kpi-pill">Runtime</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Visualizations Layout: 3 Rows matching Power BI -->
+    <main class="dashboard-analytics-grid">
+      
+      <!-- ROW 1: Donut + Area 1 + Area 2 -->
+      <div class="analytics-row row-three-cols">
+        
+        <!-- Visual 1: Movies vs TV Shows Donut Chart -->
+        <div class="chart-container-card" id="card-chart-type">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-chart-pie chart-icon"></i>
+              <h3>Movies vs TV Shows</h3>
+            </div>
+            <span class="card-badge" id="type-donut-ratio">52% / 48%</span>
+          </div>
+          <div class="chart-body chart-donut-body">
+            <canvas id="chart-type-distribution"></canvas>
+            <div class="donut-center-metric">
+              <span class="donut-center-val" id="donut-center-total">105</span>
+              <span class="donut-center-lbl">Titles</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual 2: Content Released Over Years Area Chart -->
+        <div class="chart-container-card" id="card-chart-release-years">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-chart-line chart-icon"></i>
+              <h3>Content Released Over Years</h3>
+            </div>
+            <span class="card-badge">Release Timeline</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-released-years"></canvas>
+          </div>
+        </div>
+
+        <!-- Visual 3: Content Added Over Time Area Chart -->
+        <div class="chart-container-card" id="card-chart-added-time">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-chart-area chart-icon"></i>
+              <h3>Content Added Over Time</h3>
+            </div>
+            <span class="card-badge">Platform Additions</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-added-timeline"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROW 2: Top Countries + Rating Dist + Top Genres -->
+      <div class="analytics-row row-three-cols">
+        
+        <!-- Visual 4: Top 10 Countries Horizontal Bar Chart -->
+        <div class="chart-container-card" id="card-chart-countries">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-flag chart-icon"></i>
+              <h3>Top 10 Countries</h3>
+            </div>
+            <span class="card-badge">By Title Volume</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-top-countries"></canvas>
+          </div>
+        </div>
+
+        <!-- Visual 5: Content Rating Distribution Column Chart -->
+        <div class="chart-container-card" id="card-chart-ratings">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-chart-column chart-icon"></i>
+              <h3>Content Rating Distribution</h3>
+            </div>
+            <span class="card-badge">Maturity Class</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-ratings-distribution"></canvas>
+          </div>
+        </div>
+
+        <!-- Visual 6: Top Genres Horizontal Bar Chart -->
+        <div class="chart-container-card" id="card-chart-genres">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-masks-theater chart-icon"></i>
+              <h3>Top Genres</h3>
+            </div>
+            <span class="card-badge">Popular Categories</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-top-genres"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROW 3: Content Details Table + Top Directors + Duration Dist -->
+      <div class="analytics-row row-table-directors-duration">
+        
+        <!-- Visual 7: Content Details Table (Power BI Table Visual) -->
+        <div class="chart-container-card table-card" id="card-content-details">
+          <div class="card-header table-header-row">
+            <div class="card-header-title">
+              <i class="fa-solid fa-table-list chart-icon"></i>
+              <h3>Content Details</h3>
+            </div>
+            <div class="table-tools">
+              <span class="table-info-badge" id="table-record-count">0 of 0</span>
+              <div class="table-pagination-nav">
+                <button id="table-prev-btn" class="pg-btn" title="Previous Page" disabled><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="table-page-number" class="pg-num">1 / 1</span>
+                <button id="table-next-btn" class="pg-btn" title="Next Page"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+          <div class="table-responsive-container">
+            <table class="netflix-data-table" id="content-table">
+              <thead>
+                <tr>
+                  <th data-sort="title" class="sortable">Title <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="type" class="sortable">Type <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="director" class="sortable">Director <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="country" class="sortable">Country <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="rating" class="sortable">Rating <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="release_year" class="sortable">Release Year <i class="fa-solid fa-sort"></i></th>
+                  <th data-sort="duration" class="sortable">Duration <i class="fa-solid fa-sort"></i></th>
+                </tr>
+              </thead>
+              <tbody id="content-table-tbody">
+                <!-- Dynamically populated via dashboard.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Visual 8: Top Directors Bar Chart -->
+        <div class="chart-container-card" id="card-chart-directors">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-bullhorn chart-icon"></i>
+              <h3>Top Directors</h3>
+            </div>
+            <span class="card-badge">Catalog Leaders</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-top-directors"></canvas>
+          </div>
+        </div>
+
+        <!-- Visual 9: Duration Distribution Chart -->
+        <div class="chart-container-card" id="card-chart-duration">
+          <div class="card-header">
+            <div class="card-header-title">
+              <i class="fa-solid fa-hourglass-half chart-icon"></i>
+              <h3>Duration Distribution</h3>
+            </div>
+            <span class="card-badge" id="duration-badge-mode">Movies / TV</span>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-duration-distribution"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <div class="footer-left">
+        <span><i class="fa-solid fa-chart-simple"></i> Netflix Intelligence BI Studio</span>
+        <span class="separator">•</span>
+        <span>Recreated from Power BI Report (Tharsh Netflix Dashboard)</span>
+      </div>
+      <div class="footer-right">
+        <span>Exported to 16:9 Canvas Ready</span>
+        <span class="separator">•</span>
+        <span>Interactive Filter Engine Active</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Detail Inspector Modal -->
+  <div class="netflix-modal-backdrop" id="movie-detail-modal" aria-hidden="true" role="dialog">
+    <div class="netflix-modal-dialog">
+      <button class="modal-close-btn" id="modal-close-btn" aria-label="Close details modal">&times;</button>
+      
+      <div class="modal-hero-banner">
+        <div class="modal-banner-content">
+          <div class="modal-tags-row">
+            <span class="tag-type" id="modal-type">Movie</span>
+            <span class="tag-rating" id="modal-rating">TV-MA</span>
+            <span class="tag-year" id="modal-year">2021</span>
+            <span class="tag-duration" id="modal-duration">118 min</span>
+            <span class="tag-imdb" id="modal-imdb"><i class="fa-solid fa-star"></i> 8.4</span>
+          </div>
+          <h2 class="modal-title" id="modal-title">Stranger Things</h2>
+        </div>
+      </div>
+
+      <div class="modal-body-content">
+        <div class="modal-info-col-main">
+          <h4 class="modal-section-title">Synopsis</h4>
+          <p class="modal-synopsis" id="modal-synopsis">Description goes here...</p>
+          
+          <div class="modal-genres-list" id="modal-genres">
+            <!-- Badges -->
+          </div>
+        </div>
+
+        <div class="modal-info-col-side">
+          <div class="modal-meta-item">
+            <span class="meta-label">Director:</span>
+            <span class="meta-val" id="modal-director">N/A</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">Origin Country:</span>
+            <span class="meta-val" id="modal-country">United States</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">Date Added to Netflix:</span>
+            <span class="meta-val" id="modal-date-added">2020-05-12</span>
+          </div>
+          <div class="modal-meta-item">
+            <span class="meta-label">Starring Cast:</span>
+            <span class="meta-val" id="modal-cast">Actor 1, Actor 2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Power BI Canvas Background Generator Modal / Preview -->
+  <div class="netflix-modal-backdrop" id="pbi-export-modal" aria-hidden="true" role="dialog">
+    <div class="netflix-modal-dialog pbi-export-dialog">
+      <button class="modal-close-btn" id="pbi-modal-close-btn" aria-label="Close export modal">&times;</button>
+      <div class="pbi-modal-header">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <h3>Power BI 1080p Canvas Background Exporter</h3>
+      </div>
+      <p class="pbi-modal-desc">
+        Download this custom 1920&times;1080 canvas background image to import directly into Power BI Desktop under 
+        <strong>Format &rarr; Canvas background &rarr; Add file &rarr; Image fit: Fit / Transparency: 0%</strong>.
+      </p>
+
+      <div class="pbi-preview-canvas-container">
+        <canvas id="pbi-canvas-renderer" width="1920" height="1080"></canvas>
+      </div>
+
+      <div class="pbi-export-actions">
+        <button id="btn-download-pbi-png" class="action-btn btn-primary">
+          <i class="fa-solid fa-download"></i> Download PNG (1920&times;1080)
+        </button>
+        <button id="btn-download-pbi-svg" class="action-btn btn-secondary">
+          <i class="fa-solid fa-code"></i> Download SVG Vector
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="data.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
